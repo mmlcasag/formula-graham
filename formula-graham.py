@@ -237,7 +237,7 @@ dataframe = dataframe.reindex(
 )
 
 print("Extraindo os resultados para a planilha Excel")
-dataframe.to_excel("output.xlsx", index=False)
+dataframe.to_excel("formula-graham.xlsx", index=False)
 
 print("Processo finalizado com sucesso")
 ok = input("Pressione ENTER para fechar essa janela")

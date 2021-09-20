@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 beautifulsoup4 = "*"
 pandas = "*"
+requests = "*"
+openpyxl = "*"
 
 [dev-packages]
 pyinstaller = "*"

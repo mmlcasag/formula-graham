@@ -78,18 +78,6 @@ dataframe["Patrim. Líq"] = dataframe["Patrim. Líq"].apply(
 
 print(f"Total de registros: {dataframe['Papel'].count()}")
 
-print("Filtrando apenas empresas com patrimônio líquido positivo")
-dataframe = dataframe.loc[
-    (dataframe["Patrim. Líq"] > 0)
-]
-print(f"Total de registros: {dataframe['Papel'].count()}")
-
-print("Filtrando apenas empresas com liquidez maior que R$ 250.000,00")
-dataframe = dataframe.loc[
-    (dataframe["Liq.2meses"] >= 250000)
-]
-print(f"Total de registros: {dataframe['Papel'].count()}")
-
 print("Filtrando apenas empresas com P/L entre 0 e 15")
 dataframe = dataframe.loc[
     (dataframe["P/L"] >= 0)
@@ -106,6 +94,18 @@ dataframe = dataframe.loc[
 ]
 print(f"Total de registros: {dataframe['Papel'].count()}")
 
+print("Filtrando apenas empresas com liquidez maior que R$ 200.000,00")
+dataframe = dataframe.loc[
+    (dataframe["Liq.2meses"] >= 200000)
+]
+print(f"Total de registros: {dataframe['Papel'].count()}")
+
+print("Filtrando apenas empresas com patrimônio líquido positivo")
+dataframe = dataframe.loc[
+    (dataframe["Patrim. Líq"] > 0)
+]
+print(f"Total de registros: {dataframe['Papel'].count()}")
+
 print("Buscando os lucros dos últimos 5 anos")
 dataframe["Lucro Ano -1"] = ""
 dataframe["Lucro Ano -2"] = ""
@@ -115,17 +115,18 @@ dataframe["Lucro Ano -5"] = ""
 
 for index, row in dataframe.iterrows():
     try:
-        page = requests.get(f"https://br.advfn.com/bolsa-de-valores/bovespa/{row['Papel']}/balanco", headers=headers)
-        html = bs4.BeautifulSoup(page.content, "html.parser")
-
-        header = html.find("h3", string=re.compile("Resultado Anual"))
-        content = header.parent
-        script = content.find("script")
-        
-        values = re.search(r"[{]\"name\":\"Lucro\",\"data\":[\[].+[\]][}][\]]", str(script)).group(0).replace('{"name":"Lucro","data":', "").replace("}]","")
-        values = ast.literal_eval(values)
-        values.pop()
-        values.reverse()
+        ticker = row['Papel']
+        request = requests.get(f"https://statusinvest.com.br/acao/getdre?code={ticker}", headers=headers)
+        if request.status_code == 200:
+            content = request.json()
+            if (content['success']) == True:
+                if len(content['data']['grid']) > 0:
+                    for row in content['data']['grid']:
+                        if row['isHeader'] == False:
+                            if row['gridLineModel']['key'] == "LucroLiquido":
+                                values = row['gridLineModel']['values']
+                                values.pop(0)
+                                print('- {}: {}'.format(ticker, values))
         
         if len(values) >= 1:
             dataframe.at[index, "Lucro Ano -1"] = values[0]
@@ -206,7 +207,7 @@ print("Calculando o Valor Intrínseco usando a Fórmula de Graham")
 dataframe["Valor Intrínseco"] = round(numpy.sqrt(22.5 * dataframe["LPA"] * dataframe["VPA"]),2)
 
 print("Calculando a Margem de Segurança")
-dataframe["Margem de Segurança"] = round(dataframe["Valor Intrínseco"] * 100 / dataframe["Cotação"],2)
+dataframe["Margem de Segurança"] = round(1 - (dataframe["Cotação"] / dataframe["Valor Intrínseco"]),2)
 
 dataframe = dataframe.sort_values("Margem de Segurança", ascending=False)
 
@@ -215,19 +216,19 @@ dataframe = dataframe.reindex(
         "Papel",
         "P/L",
         "P/VP",
-        "LPA",
-        "VPA",
         "Cotação",
         "Valor Intrínseco",
         "Margem de Segurança",
+        "Div.Yield",
         "Mrg. Líq.",
         "ROE",
         "ROIC",
-        "Div.Yield",
         "Dív.Brut/ Patrim.",
         "Liq. Corr.",
-        "Liq.2meses",
         "Patrim. Líq",
+        "Liq.2meses",
+        "LPA",
+        "VPA",
         "Lucro Ano -1",
         "Lucro Ano -2",
         "Lucro Ano -3",

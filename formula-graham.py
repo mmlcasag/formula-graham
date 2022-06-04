@@ -1,9 +1,8 @@
-import ast
+import requests
 import bs4
-import numpy
 import pandas
 import re
-import requests
+import numpy
 
 print("Extraindo dados de empresas através do site http://www.fundamentus.com.br")
 
@@ -78,6 +77,18 @@ dataframe["Patrim. Líq"] = dataframe["Patrim. Líq"].apply(
 
 print(f"Total de registros: {dataframe['Papel'].count()}")
 
+print("Filtrando apenas empresas com patrimônio líquido positivo")
+dataframe = dataframe.loc[
+    (dataframe["Patrim. Líq"] > 0)
+]
+print(f"Total de registros: {dataframe['Papel'].count()}")
+
+print("Filtrando apenas empresas com liquidez maior que R$ 200.000,00")
+dataframe = dataframe.loc[
+    (dataframe["Liq.2meses"] >= 200000)
+]
+print(f"Total de registros: {dataframe['Papel'].count()}")
+
 print("Filtrando apenas empresas com P/L entre 0 e 15")
 dataframe = dataframe.loc[
     (dataframe["P/L"] >= 0)
@@ -91,18 +102,6 @@ dataframe = dataframe.loc[
     (dataframe["P/VP"] >= 0)
     &
     (dataframe["P/VP"] <= 1.5)
-]
-print(f"Total de registros: {dataframe['Papel'].count()}")
-
-print("Filtrando apenas empresas com liquidez maior que R$ 200.000,00")
-dataframe = dataframe.loc[
-    (dataframe["Liq.2meses"] >= 200000)
-]
-print(f"Total de registros: {dataframe['Papel'].count()}")
-
-print("Filtrando apenas empresas com patrimônio líquido positivo")
-dataframe = dataframe.loc[
-    (dataframe["Patrim. Líq"] > 0)
 ]
 print(f"Total de registros: {dataframe['Papel'].count()}")
 
@@ -208,7 +207,7 @@ dataframe["Valor Intrínseco"] = round(numpy.sqrt(22.5 * dataframe["LPA"] * data
 
 print("Calculando a Margem de Segurança")
 dataframe["Margem de Segurança"] = round(1 - (dataframe["Cotação"] / dataframe["Valor Intrínseco"]),2)
-
+    
 dataframe = dataframe.sort_values("Margem de Segurança", ascending=False)
 
 dataframe = dataframe.reindex(

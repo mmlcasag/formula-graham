@@ -105,6 +105,41 @@ dataframe = dataframe.loc[
 ]
 print(f"Total de registros: {dataframe['Papel'].count()}")
 
+print("Filtrando apenas o ticker de maior liquidez para cada empresa")
+
+dataframe["Papel_Aux"] = ""
+
+for index, row in dataframe.iterrows():
+    ticker = ""
+    for i in row["Papel"]:
+        if not i.isdigit():
+            ticker = ticker + i
+    
+    dataframe.at[index, "Papel_Aux"] = ticker
+
+dataframe = dataframe.sort_values(["Papel_Aux", "Liq.2meses"], ascending=[True, False])
+
+dataframe["Duplicado"] = ""
+previous_ticker = ""
+for index, row in dataframe.iterrows():
+    ticker = row["Papel_Aux"]
+    
+    if (ticker == previous_ticker):
+        dataframe.at[index, "Duplicado"] = "S"
+    else:
+        dataframe.at[index, "Duplicado"] = "N"
+    
+    previous_ticker = row["Papel_Aux"]
+
+dataframe = dataframe.loc[
+    (dataframe["Duplicado"] == "N")
+]
+
+del dataframe["Papel_Aux"]
+del dataframe["Duplicado"]
+
+print(f"Total de registros: {dataframe['Papel'].count()}")
+
 print("Buscando os lucros dos últimos 5 anos")
 dataframe["Lucro Ano -1"] = ""
 dataframe["Lucro Ano -2"] = ""
